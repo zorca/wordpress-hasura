@@ -1,0 +1,6 @@
+# replace :80 with your domain name to get automatic https via LetsEncrypt
+localhost:80 {
+  root * /var/www/html
+  file_server
+  php_fastcgi wordpress:9000
+}

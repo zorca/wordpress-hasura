@@ -1,5 +1,41 @@
 version: '3.6'
 services:
+  wordpress:
+    depends_on:
+      - mysql
+    image: wordpress:5.5.1-fpm-alpine
+    container_name: wordpress
+    restart: unless-stopped
+    environment:
+      - WORDPRESS_DB_HOST=mysql:3306
+      - WORDPRESS_DB_USER=user
+      - WORDPRESS_DB_PASSWORD=password
+      - WORDPRESS_DB_NAME=database
+    volumes:
+      - wordpress:/var/www/html
+  caddy:
+    image: caddy/caddy
+    depends_on:
+      - wordpress
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./Caddyfile:/etc/caddy/Caddyfile
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    expose:
+      - 3306
+    volumes:
+      - /var/lib/mysql
+    environment:
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root_password
   postgres:
     image: postgres:12
     restart: always
@@ -10,22 +46,22 @@ services:
   graphql-engine:
     image: hasura/graphql-engine:pull5655-633f084f
     ports:
-    - "8080:8080"
+      - "8080:8080"
     depends_on:
-    - "postgres"
+      - "postgres"
     command:
-    - graphql-engine
-    - --mysql-host 
-    - <mysql-host>
-    - --mysql-user 
-    - <mysql-user>
-    - --mysql-port 
-    - <mysql-port>
-    - --mysql-dbname 
-    - <mysql-dbname>
-    - --mysql-password 
-    - <mysql-password>
-    - serve 
+      - graphql-engine
+      - --mysql-host
+      - mysql
+      - --mysql-port
+      - "3306"
+      - --mysql-user
+      - user
+      - --mysql-password
+      - password
+      - --mysql-dbname
+      - database
+      - serve
     restart: always
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
@@ -38,4 +74,4 @@ services:
       # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
 volumes:
   db_data:
-
+  wordpress:
